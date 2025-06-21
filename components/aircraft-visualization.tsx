@@ -3,6 +3,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
+import { Bar, Scatter } from "react-chartjs-2"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 export function AircraftVisualization() {
   const [currentTime, setCurrentTime] = useState("")
@@ -19,6 +43,93 @@ export function AircraftVisualization() {
     // Cleanup interval on unmount
     return () => clearInterval(timer)
   }, [])
+
+  // Model performance data from the notebooks
+  const modelData = {
+    labels: ['Random Forest', 'XGBoost', 'ElasticNet'],
+    datasets: [
+      {
+        label: 'Model RMSE Scores',
+        data: [41.52, 43.41, 44.85],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+        ],
+        borderColor: [
+          'rgb(75, 192, 192)',
+          'rgb(54, 162, 235)',
+          'rgb(153, 102, 255)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  }
+
+  // Sample RUL vs Cycles data (simulated based on notebook patterns)
+  const rulData = {
+    datasets: [
+      {
+        label: 'RUL vs Cycles',
+        data: Array.from({ length: 20 }, (_, i) => ({
+          x: i * 10,
+          y: Math.max(0, 200 - i * 10 + Math.random() * 10)
+        })),
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        borderColor: 'rgb(255, 99, 132)',
+        showLine: true,
+      }
+    ]
+  }
+
+  const modelOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Model Performance Comparison (RMSE)',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'RMSE Score (lower is better)',
+        },
+      },
+    },
+  }
+
+  const rulOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Remaining Useful Life vs Cycles',
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Cycles',
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Remaining Useful Life (RUL)',
+        },
+      },
+    },
+  }
 
   return (
     <div className="flex-1 p-6 bg-white">
@@ -210,6 +321,30 @@ export function AircraftVisualization() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Predictive Maintenance Model Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <Bar data={modelData} options={modelOptions} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Engine Lifecycle Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <Scatter data={rulData} options={rulOptions} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
