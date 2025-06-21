@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AviationSidebar } from "./components/aviation-sidebar"
-import { AircraftVisualization } from "./components/aircraft-visualization"
+import { Aircraft3DViewer } from "./components/aircraft-3d-viewer"
 
 export default function AviationDashboard() {
   return (
@@ -8,7 +8,7 @@ export default function AviationDashboard() {
       <SidebarProvider defaultOpen={true}>
         <AviationSidebar />
         <SidebarInset>
-          <AircraftVisualization />
+          <Aircraft3DViewer />
         </SidebarInset>
       </SidebarProvider>
     </div>
