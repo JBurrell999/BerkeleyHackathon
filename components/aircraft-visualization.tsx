@@ -1,7 +1,25 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
 
 export function AircraftVisualization() {
+  const [currentTime, setCurrentTime] = useState("")
+
+  useEffect(() => {
+    // Set initial time
+    setCurrentTime(new Date().toLocaleTimeString())
+
+    // Update time every second
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString())
+    }, 1000)
+
+    // Cleanup interval on unmount
+    return () => clearInterval(timer)
+  }, [])
+
   return (
     <div className="flex-1 p-6 bg-white">
       <div className="mb-6">
@@ -10,7 +28,7 @@ export function AircraftVisualization() {
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             Flight Ready
           </Badge>
-          <span className="text-sm text-gray-500">Last Updated: {new Date().toLocaleTimeString()}</span>
+          <span className="text-sm text-gray-500">Last Updated: {currentTime}</span>
         </div>
       </div>
 
