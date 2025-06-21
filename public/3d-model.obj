@@ -1,0 +1,14 @@
+# Simple airplane model
+v 0.0 0.0 0.0  # Nose
+v -1.0 0.0 1.0  # Left wing tip
+v 1.0 0.0 1.0   # Right wing tip
+v 0.0 0.0 2.0   # Tail
+v 0.0 0.5 1.0   # Top of vertical stabilizer
+
+# Fuselage
+f 1 2 3  # Front triangle
+f 2 4 3  # Main body
+f 3 4 5  # Right tail
+f 2 5 4  # Left tail
+f 1 5 2  # Top left
+f 1 3 5  # Top right 
