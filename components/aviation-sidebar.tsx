@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from "react"
 import { AlertTriangle, Bell, Plane, Settings, Wrench } from "lucide-react"
 import {
   Sidebar,
@@ -13,53 +16,79 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-const criticalAlerts = [
-  {
-    id: 1,
-    component: "Engine Turbine Blade",
-    risk: "critical",
-    message: "Metal fatigue detected - immediate inspection required",
-    timestamp: "2 min ago",
-    flightImpact: "Grounding recommended",
-  },
-  {
-    id: 2,
-    component: "Landing Gear Hydraulics",
-    risk: "critical",
-    message: "Pressure anomaly in main hydraulic system",
-    timestamp: "5 min ago",
-    flightImpact: "Flight restriction",
-  },
-]
+interface Alert {
+  id: number
+  component: string
+  risk: 'critical' | 'moderate'
+  message: string
+  timestamp: string
+  flightImpact: string
+}
 
-const moderateAlerts = [
-  {
-    id: 3,
-    component: "Wing Flap Actuator",
-    risk: "moderate",
-    message: "Increased wear detected in actuator mechanism",
-    timestamp: "15 min ago",
-    flightImpact: "Monitor closely",
-  },
-  {
-    id: 4,
-    component: "Brake System",
-    risk: "moderate",
-    message: "Brake pad thickness below optimal range",
-    timestamp: "1 hour ago",
-    flightImpact: "Schedule maintenance",
-  },
-  {
-    id: 5,
-    component: "Navigation Antenna",
-    risk: "moderate",
-    message: "Signal strength degradation observed",
-    timestamp: "2 hours ago",
-    flightImpact: "Backup systems active",
-  },
-]
+interface SimulationData {
+  isSimulating: boolean
+  alertLevel: 'safe' | 'warning' | 'danger'
+  currentSpeed: number
+  simulationTime: number
+  rulValue?: number
+}
 
 export function AviationSidebar() {
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [simulationData, setSimulationData] = useState<SimulationData>({
+    isSimulating: false,
+    alertLevel: 'safe',
+    currentSpeed: 0,
+    simulationTime: 0
+  })
+
+  // Listen for simulation events
+  useEffect(() => {
+    const handleSimulationUpdate = (event: CustomEvent) => {
+      const newData = event.detail as SimulationData
+      setSimulationData(newData)
+      
+      // Generate alerts based on simulation state
+      if (newData.isSimulating && newData.rulValue !== undefined) {
+        const newAlerts: Alert[] = []
+        
+        if (newData.alertLevel === 'danger' && newData.rulValue < 30) {
+          newAlerts.push({
+            id: Date.now(),
+            component: "Engine RUL Critical",
+            risk: "critical",
+            message: `Remaining Useful Life: ${newData.rulValue.toFixed(0)} cycles - IMMEDIATE ACTION REQUIRED`,
+            timestamp: `${newData.simulationTime}s ago`,
+            flightImpact: "Abort takeoff recommended"
+          })
+        } else if (newData.alertLevel === 'warning' && newData.rulValue < 80) {
+          newAlerts.push({
+            id: Date.now(),
+            component: "Engine RUL Warning",
+            risk: "moderate",
+            message: `Remaining Useful Life: ${newData.rulValue.toFixed(0)} cycles - Enhanced monitoring required`,
+            timestamp: `${newData.simulationTime}s ago`,
+            flightImpact: "Monitor closely during takeoff"
+          })
+        }
+        
+        setAlerts(newAlerts)
+      } else if (!newData.isSimulating) {
+        // Clear alerts when simulation stops
+        setAlerts([])
+      }
+    }
+
+    window.addEventListener('simulationUpdate', handleSimulationUpdate as EventListener)
+    
+    return () => {
+      window.removeEventListener('simulationUpdate', handleSimulationUpdate as EventListener)
+    }
+  }, [])
+
+  const criticalAlerts = alerts.filter(alert => alert.risk === 'critical')
+  const moderateAlerts = alerts.filter(alert => alert.risk === 'moderate')
+
   return (
     <Sidebar className="border-r border-gray-200">
       <SidebarHeader className="border-b border-gray-200 p-4">
@@ -73,61 +102,85 @@ export function AviationSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="p-4 space-y-4">
-        {/* Critical Alerts */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 text-red-700 font-semibold">
-            <AlertTriangle className="h-4 w-4" />
-            Critical Alerts
-            <Badge variant="destructive" className="ml-auto">
-              {criticalAlerts.length}
-            </Badge>
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="space-y-2">
-            {criticalAlerts.map((alert) => (
-              <Card key={alert.id} className="border-red-200 bg-red-50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-red-800">{alert.component}</CardTitle>
-                  <CardDescription className="text-xs text-red-600">{alert.timestamp}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-xs text-red-700 mb-2">{alert.message}</p>
-                  <Badge variant="destructive" className="text-xs">
-                    {alert.flightImpact}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Show status when no alerts */}
+        {alerts.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-green-600 mb-2">
+              <Plane className="h-8 w-8 mx-auto" />
+            </div>
+            <p className="text-sm text-gray-600">
+              {simulationData.isSimulating ? 
+                "Monitoring engine health..." : 
+                "All systems normal"
+              }
+            </p>
+            {simulationData.isSimulating && (
+              <p className="text-xs text-gray-500 mt-1">
+                Simulation: {simulationData.simulationTime}s | Speed: {simulationData.currentSpeed.toFixed(0)} kts
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* Moderate Risk Alerts */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 text-yellow-700 font-semibold">
-            <Bell className="h-4 w-4" />
-            Moderate Risk
-            <Badge variant="secondary" className="ml-auto bg-yellow-100 text-yellow-800">
-              {moderateAlerts.length}
-            </Badge>
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="space-y-2">
-            {moderateAlerts.map((alert) => (
-              <Card key={alert.id} className="border-yellow-200 bg-yellow-50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-yellow-800">{alert.component}</CardTitle>
-                  <CardDescription className="text-xs text-yellow-600">{alert.timestamp}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-xs text-yellow-700 mb-2">{alert.message}</p>
-                  <Badge className="text-xs bg-yellow-200 text-yellow-800 hover:bg-yellow-200">
-                    {alert.flightImpact}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Critical Alerts - Only show when they exist */}
+        {criticalAlerts.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center gap-2 text-red-700 font-semibold">
+              <AlertTriangle className="h-4 w-4" />
+              Critical Alerts
+              <Badge variant="destructive" className="ml-auto animate-pulse">
+                {criticalAlerts.length}
+              </Badge>
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="space-y-2">
+              {criticalAlerts.map((alert) => (
+                <Card key={alert.id} className="border-red-200 bg-red-50 animate-pulse">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-red-800">{alert.component}</CardTitle>
+                    <CardDescription className="text-xs text-red-600">{alert.timestamp}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-red-700 mb-2">{alert.message}</p>
+                    <Badge variant="destructive" className="text-xs">
+                      {alert.flightImpact}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Quick Actions */}
+        {/* Moderate Risk Alerts - Only show when they exist */}
+        {moderateAlerts.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center gap-2 text-yellow-700 font-semibold">
+              <Bell className="h-4 w-4" />
+              Moderate Risk
+              <Badge variant="secondary" className="ml-auto bg-yellow-100 text-yellow-800">
+                {moderateAlerts.length}
+              </Badge>
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="space-y-2">
+              {moderateAlerts.map((alert) => (
+                <Card key={alert.id} className="border-yellow-200 bg-yellow-50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-yellow-800">{alert.component}</CardTitle>
+                    <CardDescription className="text-xs text-yellow-600">{alert.timestamp}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-yellow-700 mb-2">{alert.message}</p>
+                    <Badge className="text-xs bg-yellow-200 text-yellow-800 hover:bg-yellow-200">
+                      {alert.flightImpact}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Quick Actions - Always visible */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-gray-700 font-semibold">Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
