@@ -1,6 +1,6 @@
 # Aircraft Subsystem Predictive Maintenance API
 
-This project implements a **machine learning-powered API** for real-time predictive maintenance of key aircraft systems. Using both deep learning and classical machine learning models, the system forecasts component health and estimates remaining useful life (RUL), enabling early detection of potential failures and optimized maintenance scheduling. This was made for the Berkeley AI Hackathon.
+This project implements a **machine learning-powered API** for real-time predictive maintenance of key aircraft systems. Using both deep learning and classical machine learning models, the system forecasts component health and estimates remaining useful life (RUL), enabling early detection of potential failures and optimized maintenance scheduling. This was made for the Berkeley AI Hackathon. Please give feedback!!
 
 ---
 
